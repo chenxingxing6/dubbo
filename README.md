@@ -6,6 +6,8 @@
 
 
 ---
+# 服务暴露，服务提供者
+
 ## 1.Dubbo-config模块
 1.1 dubbo-config-spring
 
@@ -633,4 +635,63 @@ public class FixedThreadPool implements ThreadPool {
                 new NamedInternalThreadFactory(name, true), new AbortPolicyWithReport(name, url));
     }
 }
+```
+
+---
+# 服务消费者
+<dubbo:reference id="xx" interface="com.demo.xx" version = "1.0.0" />
+registerBeanDefinitionParser("reference", new DubboBeanDefinitionParser(ReferenceBean.class, false));
+
+##### ReferenceBean[和serviceBean差不多]
+```html
+@Override
+public Object getObject() {
+    return get();
+}
+
+public synchronized T get() {
+    if (destroyed) {
+        throw new IllegalStateException("The invoker of ReferenceConfig(" + url + ") has already destroyed!");
+    }
+    if (ref == null) {
+        init();
+    }
+    return ref;
+}
+
+public synchronized void init() {
+    if (initialized) {
+        return;
+    }
+    // TODO: 2019/11/11  ApplicationModel,consumer也会注入进来
+    // TODO: 2019/11/11  ApplicationModel里面，这个类里面有所有的provider和comsumer
+    ServiceRepository repository = ApplicationModel.getServiceRepository();
+    ServiceDescriptor serviceDescriptor = repository.registerService(interfaceClass);
+    repository.registerConsumer(
+            serviceMetadata.getServiceKey(),
+            attributes,
+            serviceDescriptor,
+            this,
+            null,
+            serviceMetadata);
+    // TODO: 2019/11/11 这才是关键.....
+    ref = createProxy(map);
+}
+
+
+private T createProxy(Map<String, String> map) {
+    if (shouldJvmRefer(map)) {
+    
+    }
+    List<Invoker<?>> invokers = new ArrayList<Invoker<?>>();
+    URL registryURL = null;
+    for (URL url : urls) {
+        // TODO: 2019/11/11 这是关键 refer，有用到spi dubboInvoker
+        invokers.add(REF_PROTOCOL.refer(interfaceClass, url));
+        if (UrlUtils.isRegistry(url)) {
+            registryURL = url; // use last registry url
+        }
+    }
+}
+
 ```

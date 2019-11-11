@@ -81,6 +81,7 @@ public class ReferenceBean<T> extends ReferenceConfig<T> implements FactoryBean,
 
         // eager init if necessary.
         if (shouldInit()) {
+            // TODO: 2019/11/11 getbject()
             getObject();
         }
     }

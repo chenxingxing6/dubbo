@@ -74,9 +74,10 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
         this.invokers = invokers;
     }
 
+    // TODO: 2019/11/11 doInvoke 入参是dubbo自己定义的RpcInvocation，返回接口是RpcResult对象
     @Override
     protected Result doInvoke(final Invocation invocation) throws Throwable {
-        RpcInvocation inv = (RpcInvocation) invocation;
+        RpcInvocation inv = (RpcInvocation) invocation; // 入参
         final String methodName = RpcUtils.getMethodName(invocation);
         inv.setAttachment(PATH_KEY, getUrl().getPath());
         inv.setAttachment(VERSION_KEY, version);
