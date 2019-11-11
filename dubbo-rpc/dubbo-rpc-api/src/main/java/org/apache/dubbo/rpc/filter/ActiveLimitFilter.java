@@ -41,6 +41,7 @@ import static org.apache.dubbo.rpc.Constants.ACTIVES_KEY;
  *
  * @see Filter
  */
+// TODO: 2019/11/11 限流实现  <dubbo:service interface=“com.foo.BarService” actives=“10” />
 @Activate(group = CONSUMER, value = ACTIVES_KEY)
 public class ActiveLimitFilter implements Filter, Filter.Listener {
 

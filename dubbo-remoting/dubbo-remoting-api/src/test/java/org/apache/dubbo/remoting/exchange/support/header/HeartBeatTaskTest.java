@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import static org.apache.dubbo.common.constants.CommonConstants.DUBBO_VERSION_KEY;
 import static org.apache.dubbo.remoting.Constants.HEARTBEAT_CHECK_TICK;
 
+// TODO: 2019/11/11 心跳检查 
 public class HeartBeatTaskTest {
 
     private URL url = URL.valueOf("dubbo://localhost:20880");

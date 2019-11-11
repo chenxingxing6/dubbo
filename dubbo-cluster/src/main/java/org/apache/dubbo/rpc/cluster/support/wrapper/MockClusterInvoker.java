@@ -68,6 +68,12 @@ public class MockClusterInvoker<T> implements Invoker<T> {
         return directory.getInterface();
     }
 
+
+    // TODO: 2019/11/11 分了强制Mock和失败Mock
+
+    /**
+     * 强制Mock直接调用mock逻辑，即doMockInvoke方法。而失败Mock，会先进行集群调用，报出RPC异常后，再走mock逻辑。
+     */
     @Override
     public Result invoke(Invocation invocation) throws RpcException {
         Result result = null;
