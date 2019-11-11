@@ -27,6 +27,7 @@ public class NettyTransporter implements Transporter {
 
     public static final String NAME = "netty3";
 
+    // TODO: 2019/11/11 到这里，终于看到有点熟悉的NettyServer了，我们再看看NettyServer这个类
     @Override
     public RemotingServer bind(URL url, ChannelHandler listener) throws RemotingException {
         return new NettyServer(url, listener);

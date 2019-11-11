@@ -30,6 +30,7 @@ public class ChannelHandlers {
     protected ChannelHandlers() {
     }
 
+    // TODO: 2019/11/11 可以看到ChannelHandlers是一个单例模式，
     public static ChannelHandler wrap(ChannelHandler handler, URL url) {
         return ChannelHandlers.getInstance().wrapInternal(handler, url);
     }
@@ -42,6 +43,7 @@ public class ChannelHandlers {
         INSTANCE = instance;
     }
 
+    // TODO: 2019/11/11 这里又用了SPI创建了Dispatcher类
     protected ChannelHandler wrapInternal(ChannelHandler handler, URL url) {
         return new MultiMessageHandler(new HeartbeatHandler(ExtensionLoader.getExtensionLoader(Dispatcher.class)
                 .getAdaptiveExtension().dispatch(handler, url)));

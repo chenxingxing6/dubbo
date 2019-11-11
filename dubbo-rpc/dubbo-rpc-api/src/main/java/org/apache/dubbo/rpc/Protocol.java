@@ -25,6 +25,7 @@ import java.util.List;
 
 /**
  * Protocol. (API/SPI, Singleton, ThreadSafe)
+ * DubboProtocol实现
  */
 @SPI("dubbo")
 public interface Protocol {

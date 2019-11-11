@@ -297,11 +297,13 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         doExportUrls();
 
         // dispatch a ServiceConfigExportedEvent since 2.7.4
+        // TODO: 2019/11/11 服务请求过来，进行分发
         dispatch(new ServiceConfigExportedEvent(this));
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void doExportUrls() {
+        // TODO: 2019/11/11 把生成好了serviceBean放到了一个ApplicationModel里面，后面consumer也会放到这里面
         ServiceRepository repository = ApplicationModel.getServiceRepository();
         ServiceDescriptor serviceDescriptor = repository.registerService(getInterfaceClass());
         repository.registerProvider(
@@ -312,8 +314,15 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                 serviceMetadata
         );
 
+
+        /**
+         * 拼接注册url
+         * registry://172.23.2.101:2181/com.alibaba.dubbo.registry.RegistryService?application=oic-dubbo-provider
+         * &dubbo=2.6.1&logger=slf4j&pid=15258&register=true&registry=zookeeper&timestamp=1528958780785
+         */
         List<URL> registryURLs = ConfigValidationUtils.loadRegistries(this, true);
 
+        // 将protocols列表中的每个protocol根据url暴露出去,主要是doExportUrlsFor1Protocol方法
         for (ProtocolConfig protocolConfig : protocols) {
             String pathKey = URL.buildKey(getContextPath(protocolConfig)
                     .map(p -> p + "/" + path)
@@ -326,6 +335,18 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         }
     }
 
+
+    /**
+     * 然后这个方法前期就一堆塞参数到map，最后也是跟上面生成registryUrl差不多，只不过多加了一些module,provider和自己的一些参数，
+     * 拼成一个更长的url。下面这个就是我上面那个服务生成的完整url:
+     *
+     * dubbo://10.8.0.28:12000/com.tyyd.oic.service.PushMessageService?accepts=1000&anyhost=true&application=oic-dubbo-provider
+     * &bind.ip=10.8.0.28&bind.port=12000&buffer=8192&charset=UTF-8&default.service.filter=dubboCallDetailFilter&dubbo=2.6.1
+     * &generic=false&interface=com.tyyd.oic.service.PushMessageService&iothreads=9&logger=slf4j
+     * &methods=deletePushMessage,getPushMessage,batchPushMessage,addPushMessage,updatePushMessage,qryPushMessage
+     * &payload=8388608&pid=15374&queues=0&retries=0&revision=1.0.0&serialization=hessian2&side=provider
+     * &threadpool=fixed&threads=100&timeout=6000&timestamp=1528959454516&version=1.0.0
+     */
     private void doExportUrlsFor1Protocol(ProtocolConfig protocolConfig, List<URL> registryURLs) {
         String name = protocolConfig.getName();
         if (StringUtils.isEmpty(name)) {
@@ -448,6 +469,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                 exportLocal(url);
             }
             // export to remote if the config is not local (export to local only when config is local)
+            // 转成Invoke创建exporter
             if (!SCOPE_LOCAL.equalsIgnoreCase(scope)) {
                 if (CollectionUtils.isNotEmpty(registryURLs)) {
                     for (URL registryURL : registryURLs) {
@@ -474,9 +496,17 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                             registryURL = registryURL.addParameter(PROXY_KEY, proxy);
                         }
 
+                        // private static final ProxyFactory PROXY_FACTORY = ExtensionLoader.getExtensionLoader(ProxyFactory.class).getAdaptiveExtension();
+                        // proxyFactory：动态代理生成 javasissistProxyFactory | JdkProxyFactory
+                        // proxyFactory变量的生成方法叫做spi：同一个接口，动态修改x.clsss获取到不同实现类,而且拿到的这个类是单列的
+
+                        // JavassistProxyFactory生成了一个Wrapper，然后wrapper被封装到一个Invoker里面
                         Invoker<?> invoker = PROXY_FACTORY.getInvoker(ref, (Class) interfaceClass, registryURL.addParameterAndEncoded(EXPORT_KEY, url.toFullString()));
+
+                        // 用生成的invoker再封装成一个DelegateProviderMetaDataInvoker，这个类跟invoker区别不大，只是多放了this这个serviceBean的信息，方便后面使用
                         DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
 
+                        // private static final Protocol protocol = ExtensionLoader.getExtensionLoader(Protocol.class).getAdaptiveExtension();
                         Exporter<?> exporter = protocol.export(wrapperInvoker);
                         exporters.add(exporter);
                     }
@@ -485,6 +515,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                         logger.info("Export dubbo service " + interfaceClass.getName() + " to url " + url);
                     }
                     Invoker<?> invoker = PROXY_FACTORY.getInvoker(ref, (Class) interfaceClass, url);
+
                     DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
 
                     Exporter<?> exporter = protocol.export(wrapperInvoker);

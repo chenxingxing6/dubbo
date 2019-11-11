@@ -23,7 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- *
+ * DefaultExecutorRepository默认
  */
 @SPI("default")
 public interface ExecutorRepository {

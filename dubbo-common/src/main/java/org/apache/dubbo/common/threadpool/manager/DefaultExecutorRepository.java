@@ -146,6 +146,7 @@ public class DefaultExecutorRepository implements ExecutorRepository {
         return SHARED_EXECUTOR;
     }
 
+    // TODO: 2019/11/11  ThreadPool spi
     private ExecutorService createExecutor(URL url) {
         return (ExecutorService) ExtensionLoader.getExtensionLoader(ThreadPool.class).getAdaptiveExtension().getExecutor(url);
     }

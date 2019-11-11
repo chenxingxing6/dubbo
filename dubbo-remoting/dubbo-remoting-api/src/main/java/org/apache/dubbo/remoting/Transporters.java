@@ -53,6 +53,7 @@ public class Transporters {
         } else {
             handler = new ChannelHandlerDispatcher(handlers);
         }
+        // TODO: 2019/11/11 Transporter又是spi
         return getTransporter().bind(url, handler);
     }
 

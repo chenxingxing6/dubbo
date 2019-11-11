@@ -61,10 +61,13 @@ public class NettyServer extends AbstractServer implements RemotingServer {
 
     private org.jboss.netty.channel.Channel channel;
 
+    // TODO: 2019/11/11    ChannelHandlers.wrap(handler, url)
     public NettyServer(URL url, ChannelHandler handler) throws RemotingException {
         super(ExecutorUtil.setThreadName(url, SERVER_THREAD_POOL_NAME), ChannelHandlers.wrap(handler, url));
     }
 
+
+    // TODO: 2019/11/11 doOpen() 然后这里开始基本就是些跟jdk本身比较相关的地方了，还有就是终于看到netty相关的包了。
     @Override
     protected void doOpen() throws Throwable {
         NettyHelper.setNettyLoggerFactory();
@@ -73,6 +76,7 @@ public class NettyServer extends AbstractServer implements RemotingServer {
         ChannelFactory channelFactory = new NioServerSocketChannelFactory(boss, worker, getUrl().getPositiveParameter(IO_THREADS_KEY, Constants.DEFAULT_IO_THREADS));
         bootstrap = new ServerBootstrap(channelFactory);
 
+        // TODO: 2019/11/11  NettyHandler
         final NettyHandler nettyHandler = new NettyHandler(getUrl(), this);
         channels = nettyHandler.getChannels();
         // https://issues.jboss.org/browse/NETTY-365

@@ -277,6 +277,8 @@ public class DubboProtocol extends AbstractProtocol {
         return DEFAULT_PORT;
     }
 
+
+    // TODO: 2019/11/11 export方法
     @Override
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
         URL url = invoker.getUrl();
@@ -302,6 +304,7 @@ public class DubboProtocol extends AbstractProtocol {
             }
         }
 
+        // TODO: 2019/11/11 url：dubbo://loclhost....
         openServer(url);
         optimizeSerialization(url);
 
@@ -319,6 +322,7 @@ public class DubboProtocol extends AbstractProtocol {
                 synchronized (this) {
                     server = serverMap.get(key);
                     if (server == null) {
+                        // TODO: 2019/11/11 createService......创建服务
                         serverMap.put(key, createServer(url));
                     }
                 }
@@ -345,6 +349,7 @@ public class DubboProtocol extends AbstractProtocol {
 
         ExchangeServer server;
         try {
+            // TODO: 2019/11/11 关注一下：这里spi：Exchange
             server = Exchangers.bind(url, requestHandler);
         } catch (RemotingException e) {
             throw new RpcException("Fail to start server(url: " + url + ") " + e.getMessage(), e);

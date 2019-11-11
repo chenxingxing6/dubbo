@@ -119,8 +119,12 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
                     }
                 }
             }
-        } else if (ServiceBean.class.equals(beanClass)) {
+        }
+        // <dubbo:service ref=“xXService" interface=“com.IXXService" version="${dubbo.version}"/>
+        // <dubbo:service class=“xxxx" interface=“com.IXXService" version="${dubbo.version}"/>
+        else if (ServiceBean.class.equals(beanClass)) {
             String className = element.getAttribute("class");
+            /*没有class属性，用ref,如果ref和class都写了，ref为准*/;
             if (StringUtils.isNotEmpty(className)) {
                 RootBeanDefinition classDefinition = new RootBeanDefinition();
                 classDefinition.setBeanClass(ReflectUtils.forName(className));

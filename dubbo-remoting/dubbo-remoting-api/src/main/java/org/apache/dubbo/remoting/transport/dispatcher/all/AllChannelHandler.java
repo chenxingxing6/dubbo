@@ -31,6 +31,7 @@ import java.util.concurrent.RejectedExecutionException;
 
 public class AllChannelHandler extends WrappedChannelHandler {
 
+    // TODO: 2019/11/11  super()
     public AllChannelHandler(ChannelHandler handler, URL url) {
         super(handler, url);
     }

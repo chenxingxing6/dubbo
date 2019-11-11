@@ -25,9 +25,7 @@ import org.apache.dubbo.remoting.exchange.support.header.HeaderExchanger;
 
 /**
  * Exchanger. (SPI, Singleton, ThreadSafe)
- * <p>
- * <a href="http://en.wikipedia.org/wiki/Message_Exchange_Pattern">Message Exchange Pattern</a>
- * <a href="http://en.wikipedia.org/wiki/Request-response">Request-Response</a>
+ * 默认 HeaderExchanger.java
  */
 @SPI(HeaderExchanger.NAME)
 public interface Exchanger {

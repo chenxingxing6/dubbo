@@ -130,9 +130,9 @@ public class WrappedChannelHandler implements ChannelHandlerDelegate {
      *
      * @return
      */
+    // TODO: 2019/11/11 ExecutorRepository
     public ExecutorService getSharedExecutorService() {
-        ExecutorRepository executorRepository =
-                ExtensionLoader.getExtensionLoader(ExecutorRepository.class).getDefaultExtension();
+        ExecutorRepository executorRepository = ExtensionLoader.getExtensionLoader(ExecutorRepository.class).getDefaultExtension();
         ExecutorService executor = executorRepository.getExecutor(url);
         if (executor == null) {
             executor = executorRepository.createExecutorIfAbsent(url);
