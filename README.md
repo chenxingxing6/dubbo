@@ -5,10 +5,54 @@
 ![Architecture](http://dubbo.apache.org/img/architecture.png)
 
 
-## 源码模块
+## 源码模块划分
+common : 通用逻辑模块，提供工具类和通用模型  
+remoting: 远程模块，为消费者和服务提供者提供通信能力    
+rpc: 与remoting相似，本模块提供各种通信协议，以及动态代理   
+cluster: 集群容错模块，rpc只关心单个调用，本模块包括负载均衡，以及动态代理   
+registry：注册中信息模块   
+monitor: 监控模块，监控dubbo接口的调用次数，时间等   
+config:配置模块，实现了API配置，属性配置，XML配置，注解配置等功能  
+container：容器模块   
+fiter：拦截器模块，包含dubbo内置的过滤器   
+plugin:插件模块,提供内置的插件   
+demo:远程调用示例      
+test：测试模块      
+---
 
+## 功能层次划分  
+service: 业务层，开发者实现的业务代码
+proxy:服务代理层
+registry:注册层，dubbo服务的注册于发现
+cluster:集群容错层
+monitor:监控层
+protocol:远程调用层
+exchange 信息交换层
+transport 网络传输层
+serialize序列化层  
 
 ---
+
+##### dubbo服务启动时发生了什么:
+dubbo服务初始化启动时，通过Proxy组件调用具体协议（Protocol），把服务端要暴露的接口封装成Invoker
+（真实类型是AbstractProxyInvoker），然后转换成Exporter，这个时候框架会打开服务端口等并记录服务
+实例到内存中，最后通过Registry把服务元数据注册到注册中心，如果是消费者，在启动时会通过Registry注
+册中心订阅服务端的元数据，就可以获取暴露的服务了。
+
+
+##### dubbo消费者调用生产者服务时发生了什么：
+每个消费者接口都会有一个interface代理类，这些代理类由Proxy持有管理着，触发Invoker的方法调用时，需
+要使用Cluster，Cluster负责容错，如果调用失败会重试。在调用之前会通过Directory获取所有可调用的列表
+，然后根据路由规则将列表过滤一遍，然后通过LoadBalance做负载均衡，选定一个可调用的Invoker，这个Invoker
+在调用之前又会通过一个拦截器，这个拦截器通常是处理上下文，限流，计数等。
+
+
+接着会通过Client做数据传输，生产者收到数据包，会使用Codec处理协议头以及一些半包、粘包等，处理完之后再对
+完整的数据报文做反序列化处理。随后，这个Request会被分配到线程池中进行处理，Server会处理这些request，根
+据请求查找对应的Export，经过拦截器之后原路返回。
+
+---
+
 # 服务暴露，服务提供者
 
 ## 1.Dubbo-config模块
