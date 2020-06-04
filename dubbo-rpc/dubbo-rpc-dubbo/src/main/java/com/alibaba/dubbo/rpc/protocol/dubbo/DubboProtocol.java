@@ -332,6 +332,7 @@ public class DubboProtocol extends AbstractProtocol {
 
     @Override
     public <T> Invoker<T> refer(Class<T> serviceType, URL url) throws RpcException {
+        // dubbo://192.168.99.1:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-consumer&bean.name=com.alibaba.dubbo.demo.DemoService&check=false&dubbo=2.0.2&generic=false&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello&pid=7396&qos.port=33333&register.ip=192.168.99.1&remote.timestamp=1591253947496&side=consumer&timestamp=1591259461781
         optimizeSerialization(url);
         // create rpc invoker.
         DubboInvoker<T> invoker = new DubboInvoker<T>(serviceType, url, getClients(url), invokers);
@@ -414,6 +415,7 @@ public class DubboProtocol extends AbstractProtocol {
             if (url.getParameter(Constants.LAZY_CONNECT_KEY, false)) {
                 client = new LazyConnectExchangeClient(url, requestHandler);
             } else {
+                // 连接网络入口
                 client = Exchangers.connect(url, requestHandler);
             }
         } catch (RemotingException e) {
