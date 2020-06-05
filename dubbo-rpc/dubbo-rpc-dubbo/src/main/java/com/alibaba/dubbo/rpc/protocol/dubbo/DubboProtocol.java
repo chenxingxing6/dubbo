@@ -248,6 +248,7 @@ public class DubboProtocol extends AbstractProtocol {
             }
         }
 
+        // 同一个机器不同服务导出只会开启一个NettyServer
         openServer(url);
         optimizeSerialization(url);
         return exporter;
@@ -281,6 +282,7 @@ public class DubboProtocol extends AbstractProtocol {
 
         url = url.addParameter(Constants.CODEC_KEY, DubboCodec.NAME);
         ExchangeServer server;
+        // 开启服务HeaderExchanges->Transporters->NettyTransporter
         try {
             server = Exchangers.bind(url, requestHandler);
         } catch (RemotingException e) {
