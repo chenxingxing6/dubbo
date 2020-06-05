@@ -66,6 +66,10 @@ public class ExchangeCodec extends TelnetCodec {
         return MAGIC;
     }
 
+
+    /**
+     * 编码-请求or响应
+     */
     @Override
     public void encode(Channel channel, ChannelBuffer buffer, Object msg) throws IOException {
         if (msg instanceof Request) {
@@ -77,6 +81,10 @@ public class ExchangeCodec extends TelnetCodec {
         }
     }
 
+
+    /**
+     * 解码
+     */
     @Override
     public Object decode(Channel channel, ChannelBuffer buffer) throws IOException {
         int readable = buffer.readableBytes();
@@ -85,6 +93,10 @@ public class ExchangeCodec extends TelnetCodec {
         return decode(channel, buffer, readable, header);
     }
 
+
+    /**
+     * 解码入口
+     */
     @Override
     protected Object decode(Channel channel, ChannelBuffer buffer, int readable, byte[] header) throws IOException {
         // check magic number.
@@ -208,25 +220,30 @@ public class ExchangeCodec extends TelnetCodec {
         return req.getData();
     }
 
+
+    /**
+     * 编码入口
+     */
     protected void encodeRequest(Channel channel, ChannelBuffer buffer, Request req) throws IOException {
+        // 获取序列化方式（默认hessian2）
         Serialization serialization = getSerialization(channel);
-        // header.
+        // 头部（16字节）
         byte[] header = new byte[HEADER_LENGTH];
-        // set magic number.
+
+        // 设置魔数
         Bytes.short2bytes(MAGIC, header);
-
-        // set request and serialization flag.
+        // 设置请求方式和序列化方式Id
         header[2] = (byte) (FLAG_REQUEST | serialization.getContentTypeId());
-
         if (req.isTwoWay()) header[2] |= FLAG_TWOWAY;
         if (req.isEvent()) header[2] |= FLAG_EVENT;
 
-        // set request id.
+        // 设置requestId
         Bytes.long2bytes(req.getId(), header, 4);
 
         // encode request data.
         int savedWriteIndex = buffer.writerIndex();
         buffer.writerIndex(savedWriteIndex + HEADER_LENGTH);
+        // 数据写入缓存
         ChannelBufferOutputStream bos = new ChannelBufferOutputStream(buffer);
         ObjectOutput out = serialization.serialize(channel.getUrl(), bos);
         if (req.isEvent()) {

@@ -126,7 +126,7 @@ final class NettyCodecAdapter {
             int saveReaderIndex;
 
             try {
-                // decode object.
+                // 解码实例数据（解决半包拆包问题）
                 do {
                     saveReaderIndex = message.readerIndex();
                     try {

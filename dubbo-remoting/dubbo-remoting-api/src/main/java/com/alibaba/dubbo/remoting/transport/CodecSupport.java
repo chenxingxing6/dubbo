@@ -61,6 +61,8 @@ public class CodecSupport {
         return ID_SERIALIZATION_MAP.get(id);
     }
 
+
+    // 默认协议 hessian2
     public static Serialization getSerialization(URL url) {
         return ExtensionLoader.getExtensionLoader(Serialization.class).getExtension(
                 url.getParameter(Constants.SERIALIZATION_KEY, Constants.DEFAULT_REMOTING_SERIALIZATION));
