@@ -17,10 +17,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.apache.dubbo</groupId>
+        <groupId>com.alibaba</groupId>
         <artifactId>dubbo-parent</artifactId>
-        <version>${revision}</version>
-        <relativePath>../pom.xml</relativePath>
+        <version>2.6.7-SNAPSHOT</version>
     </parent>
     <artifactId>dubbo-demo</artifactId>
     <packaging>pom</packaging>
@@ -29,23 +28,16 @@
     <properties>
         <skip_maven_deploy>true</skip_maven_deploy>
     </properties>
-
     <modules>
-        <module>dubbo-demo-interface</module>
-        <module>dubbo-demo-xml</module>
-        <module>dubbo-demo-annotation</module>
         <module>dubbo-demo-api</module>
-        <module>dubbo-demo-servicediscovery-xml</module>
-        <module>servicediscovery-transfer</module>
-        <module>dubbo-call-sc</module>
-        <module>dubbo-call-scdubbo</module>
-        <module>sc-call-dubbo</module>
+        <module>dubbo-demo-provider</module>
+        <module>dubbo-demo-consumer</module>
     </modules>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>org.apache.dubbo</groupId>
+                <groupId>com.alibaba</groupId>
                 <artifactId>dubbo-bom</artifactId>
                 <version>${project.parent.version}</version>
                 <type>pom</type>

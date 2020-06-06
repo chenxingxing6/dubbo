@@ -17,10 +17,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.apache.dubbo</groupId>
+        <groupId>com.alibaba</groupId>
         <artifactId>dubbo-parent</artifactId>
-        <version>${revision}</version>
-        <relativePath>../pom.xml</relativePath>
+        <version>2.6.7-SNAPSHOT</version>
     </parent>
     <artifactId>dubbo-rpc</artifactId>
     <packaging>pom</packaging>
@@ -33,17 +32,13 @@
         <module>dubbo-rpc-api</module>
         <module>dubbo-rpc-dubbo</module>
         <module>dubbo-rpc-injvm</module>
-        <module>dubbo-rpc-http</module>
         <module>dubbo-rpc-rmi</module>
         <module>dubbo-rpc-hessian</module>
-        <module>dubbo-rpc-http-invoker</module>
+        <module>dubbo-rpc-http</module>
         <module>dubbo-rpc-webservice</module>
-        <module>dubbo-rpc-native-thrift</module>
         <module>dubbo-rpc-thrift</module>
         <module>dubbo-rpc-memcached</module>
         <module>dubbo-rpc-redis</module>
         <module>dubbo-rpc-rest</module>
-        <module>dubbo-rpc-xml</module>
-        <module>dubbo-rpc-grpc</module>
     </modules>
 </project>

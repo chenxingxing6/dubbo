@@ -1,8 +1,139 @@
-# Dubbo源码学习-蓝星花  
+# Dubbo源码学习2.6.x-蓝星花  
 
 ## 架构图
 
 ![Architecture](http://dubbo.apache.org/img/architecture.png)
+
+
+## 源码模块划分   
+```html
+common : 通用逻辑模块，提供工具类和通用模型  
+remoting: 远程模块，为消费者和服务提供者提供通信能力    
+rpc: 与remoting相似，本模块提供各种通信协议，以及动态代理   
+cluster: 集群容错模块，多个服务伪装一个服务提供方，（负载均衡，容错，路由）
+registry：注册中心实现(multicast,zk,redis)  
+monitor: 监控模块，监控dubbo接口的调用次数，时间等   
+config:配置模块，实现了API配置，属性配置，XML配置，注解配置等功能  
+container：容器模块   
+fiter：拦截器模块，包含dubbo内置的过滤器   
+plugin:插件模块,提供内置的插件   
+demo:远程调用示例      
+test：测试模块  
+```    
+---
+
+## 功能层次划分  
+```html
+service: 业务层，开发者实现的业务代码
+proxy:服务代理层
+registry:注册层，dubbo服务的注册于发现
+cluster:集群容错层
+monitor:监控层
+protocol:远程调用层
+exchange 信息交换层
+transport 网络传输层
+serialize序列化层  
+```
+
+---
+
+##### dubbo服务启动时发生了什么:
+dubbo服务初始化启动时，通过Proxy组件调用具体协议（Protocol），把服务端要暴露的接口封装成Invoker
+（真实类型是AbstractProxyInvoker），然后转换成Exporter，这个时候框架会打开服务端口等并记录服务
+实例到内存中，最后通过Registry把服务元数据注册到注册中心，如果是消费者，在启动时会通过Registry注
+册中心订阅服务端的元数据，就可以获取暴露的服务了。
+
+
+##### dubbo消费者调用生产者服务时发生了什么：
+每个消费者接口都会有一个interface代理类，这些代理类由Proxy持有管理着，触发Invoker的方法调用时，需
+要使用Cluster，Cluster负责容错，如果调用失败会重试。在调用之前会通过Directory获取所有可调用的列表
+，然后根据路由规则将列表过滤一遍，然后通过LoadBalance做负载均衡，选定一个可调用的Invoker，这个Invoker
+在调用之前又会通过一个拦截器，这个拦截器通常是处理上下文，限流，计数等。
+
+
+接着会通过Client做数据传输，生产者收到数据包，会使用Codec处理协议头以及一些半包、粘包等，处理完之后再对
+完整的数据报文做反序列化处理。随后，这个Request会被分配到线程池中进行处理，Server会处理这些request，根
+据请求查找对应的Export，经过拦截器之后原路返回。
+
+---
+## 面试题
+##### 1.服务发布流程
+1.DubboNamespaceHandler.init()  
+2.ServiceBean.afterPropertiesSet() -> export()    
+3.ServiceConfig.doExport() -> doExportUrls() -> doExportUrlsFor1Protocol()       
+4.SPI扩展  ExtensionLoader.getExtensionLoader(ProxyFactory.class).getAdaptiveExtension()  
+  ProxyFactory    
+  Protocol   
+  Exchanger   
+  Transporter   
+  Dispatcher   
+  ExecutorRepository   
+  ThreadPool   
+
+   
+
+##### 2.服务引用流程
+1.DubboNamespaceHandler.init()  
+2.ReferenceBean.afterPropertiesSet() -> getObject()  
+3.ReferenceConfig.init() -> createProxy(map) -> refprotocol.refer(interfaceClass, url)   
+4.DubboProtocol.refer()   
+5.new DubboInvoker<T>(serviceType, url, getClients(url), invokers)
+6.Exchangers.connect(url, requestHandler);   
+4.Transporters.connect()
+5.NettyClient -> new AbstractClient() -> connect()   
+
+
+##### 3.超时实现原理
+1.ReentrantLock,ConditionObject   
+2.DefaultFuture.class -> get()
+
+
+##### 4.重试实现原理
+1.FailoverClusterInvoke.class->doInvoke()  
+
+
+##### 5.负载实现原理
+1.RandomLoadBalance    
+2.RoundRobinLoadBalance   
+3.LeastActiveLoadBalance(RpcStatus维护了个map)   
+4.ConsistentHashLoadBalance    
+
+
+##### 6.缓存实现原理
+1.LruCache    
+2.ThreadLocalCache    
+3.Jcache     
+
+##### 7.线程模型
+1.AllDispatcher（默认）
+2.DirectDispatcher   
+3.MessageOnlyDispatcher   
+4.ExecutionDispatcher   
+5.ConnectionDispatcher   
+
+确定时机？
+1.new NettyServer()->ChannelHandlers.wrap()   
+2.new HeartbeatHandler(SPI);  
+
+##### 8.线程池策略（dubbo自己实现）
+1.fix(默认)
+2.limited
+3.eager
+4.cached
+
+确定时机？(以AllDispatcher为例子)
+1.new AllChannelHandler()    
+2.new WrappedChannelHandler()   
+3.ExtensionLoader.getExtensionLoader(ThreadPool.class).getAdaptiveExtension().getExecutor(url);  
+
+
+
+
+
+
+
+
+
 
 
 ---
@@ -44,175 +175,12 @@
 > 逻辑比较多，不过大体意思就是拿到xml中所有配置的基本信息，然后定义成spring中的BeanDefinition。保存类名，scope，属性，构造函数参数列表，
 依赖Bean，是否是单例的，是否懒加载....后面对Bean的操作直接对BeanDefinition操作就好了。
 
-
-```html
-  private static BeanDefinition parse(Element element, ParserContext parserContext, Class<?> beanClass, boolean required) {
-        RootBeanDefinition beanDefinition = new RootBeanDefinition();
-        beanDefinition.setBeanClass(beanClass);
-        beanDefinition.setLazyInit(false);
-        String id = element.getAttribute("id");
-        if (StringUtils.isEmpty(id) && required) {
-            String generatedBeanName = element.getAttribute("name");
-            if (StringUtils.isEmpty(generatedBeanName)) {
-                if (ProtocolConfig.class.equals(beanClass)) {
-                    generatedBeanName = "dubbo";
-                } else {
-                    generatedBeanName = element.getAttribute("interface");
-                }
-            }
-            if (StringUtils.isEmpty(generatedBeanName)) {
-                generatedBeanName = beanClass.getName();
-            }
-            id = generatedBeanName;
-            int counter = 2;
-            while (parserContext.getRegistry().containsBeanDefinition(id)) {
-                id = generatedBeanName + (counter++);
-            }
-        }
-        if (StringUtils.isNotEmpty(id)) {
-            if (parserContext.getRegistry().containsBeanDefinition(id)) {
-                throw new IllegalStateException("Duplicate spring bean id " + id);
-            }
-            parserContext.getRegistry().registerBeanDefinition(id, beanDefinition);
-            beanDefinition.getPropertyValues().addPropertyValue("id", id);
-        }
-        if (ProtocolConfig.class.equals(beanClass)) {
-            for (String name : parserContext.getRegistry().getBeanDefinitionNames()) {
-                BeanDefinition definition = parserContext.getRegistry().getBeanDefinition(name);
-                PropertyValue property = definition.getPropertyValues().getPropertyValue("protocol");
-                if (property != null) {
-                    Object value = property.getValue();
-                    if (value instanceof ProtocolConfig && id.equals(((ProtocolConfig) value).getName())) {
-                        definition.getPropertyValues().addPropertyValue("protocol", new RuntimeBeanReference(id));
-                    }
-                }
-            }
-        } else if (ServiceBean.class.equals(beanClass)) {
-            String className = element.getAttribute("class");
-            if (StringUtils.isNotEmpty(className)) {
-                RootBeanDefinition classDefinition = new RootBeanDefinition();
-                classDefinition.setBeanClass(ReflectUtils.forName(className));
-                classDefinition.setLazyInit(false);
-                parseProperties(element.getChildNodes(), classDefinition);
-                beanDefinition.getPropertyValues().addPropertyValue("ref", new BeanDefinitionHolder(classDefinition, id + "Impl"));
-            }
-        } else if (ProviderConfig.class.equals(beanClass)) {
-            parseNested(element, parserContext, ServiceBean.class, true, "service", "provider", id, beanDefinition);
-        } else if (ConsumerConfig.class.equals(beanClass)) {
-            parseNested(element, parserContext, ReferenceBean.class, false, "reference", "consumer", id, beanDefinition);
-        }
-        Set<String> props = new HashSet<>();
-        ManagedMap parameters = null;
-        for (Method setter : beanClass.getMethods()) {
-            String name = setter.getName();
-            if (name.length() > 3 && name.startsWith("set")
-                    && Modifier.isPublic(setter.getModifiers())
-                    && setter.getParameterTypes().length == 1) {
-                Class<?> type = setter.getParameterTypes()[0];
-                String beanProperty = name.substring(3, 4).toLowerCase() + name.substring(4);
-                String property = StringUtils.camelToSplitName(beanProperty, "-");
-                props.add(property);
-                // check the setter/getter whether match
-                Method getter = null;
-                try {
-                    getter = beanClass.getMethod("get" + name.substring(3), new Class<?>[0]);
-                } catch (NoSuchMethodException e) {
-                    try {
-                        getter = beanClass.getMethod("is" + name.substring(3), new Class<?>[0]);
-                    } catch (NoSuchMethodException e2) {
-                        // ignore, there is no need any log here since some class implement the interface: EnvironmentAware,
-                        // ApplicationAware, etc. They only have setter method, otherwise will cause the error log during application start up.
-                    }
-                }
-                if (getter == null
-                        || !Modifier.isPublic(getter.getModifiers())
-                        || !type.equals(getter.getReturnType())) {
-                    continue;
-                }
-                if ("parameters".equals(property)) {
-                    parameters = parseParameters(element.getChildNodes(), beanDefinition);
-                } else if ("methods".equals(property)) {
-                    parseMethods(id, element.getChildNodes(), beanDefinition, parserContext);
-                } else if ("arguments".equals(property)) {
-                    parseArguments(id, element.getChildNodes(), beanDefinition, parserContext);
-                } else {
-                    String value = element.getAttribute(property);
-                    if (value != null) {
-                        value = value.trim();
-                        if (value.length() > 0) {
-                            if ("registry".equals(property) && RegistryConfig.NO_AVAILABLE.equalsIgnoreCase(value)) {
-                                RegistryConfig registryConfig = new RegistryConfig();
-                                registryConfig.setAddress(RegistryConfig.NO_AVAILABLE);
-                                beanDefinition.getPropertyValues().addPropertyValue(beanProperty, registryConfig);
-                            } else if ("provider".equals(property) || "registry".equals(property) || ("protocol".equals(property) && ServiceBean.class.equals(beanClass))) {
-                                /**
-                                 * For 'provider' 'protocol' 'registry', keep literal value (should be id/name) and set the value to 'registryIds' 'providerIds' protocolIds'
-                                 * The following process should make sure each id refers to the corresponding instance, here's how to find the instance for different use cases:
-                                 * 1. Spring, check existing bean by id, see{@link ServiceBean#afterPropertiesSet()}; then try to use id to find configs defined in remote Config Center
-                                 * 2. API, directly use id to find configs defined in remote Config Center; if all config instances are defined locally, please use {@link ServiceConfig#setRegistries(List)}
-                                 */
-                                beanDefinition.getPropertyValues().addPropertyValue(beanProperty + "Ids", value);
-                            } else {
-                                Object reference;
-                                if (isPrimitive(type)) {
-                                    if ("async".equals(property) && "false".equals(value)
-                                            || "timeout".equals(property) && "0".equals(value)
-                                            || "delay".equals(property) && "0".equals(value)
-                                            || "version".equals(property) && "0.0.0".equals(value)
-                                            || "stat".equals(property) && "-1".equals(value)
-                                            || "reliable".equals(property) && "false".equals(value)) {
-                                        // backward compatibility for the default value in old version's xsd
-                                        value = null;
-                                    }
-                                    reference = value;
-                                } else if (ONRETURN.equals(property) || ONTHROW.equals(property) || ONINVOKE.equals(property)) {
-                                    int index = value.lastIndexOf(".");
-                                    String ref = value.substring(0, index);
-                                    String method = value.substring(index + 1);
-                                    reference = new RuntimeBeanReference(ref);
-                                    beanDefinition.getPropertyValues().addPropertyValue(property + METHOD, method);
-                                } else {
-                                    if ("ref".equals(property) && parserContext.getRegistry().containsBeanDefinition(value)) {
-                                        BeanDefinition refBean = parserContext.getRegistry().getBeanDefinition(value);
-                                        if (!refBean.isSingleton()) {
-                                            throw new IllegalStateException("The exported service ref " + value + " must be singleton! Please set the " + value + " bean scope to singleton, eg: <bean id=\"" + value + "\" scope=\"singleton\" ...>");
-                                        }
-                                    }
-                                    reference = new RuntimeBeanReference(value);
-                                }
-                                beanDefinition.getPropertyValues().addPropertyValue(beanProperty, reference);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        NamedNodeMap attributes = element.getAttributes();
-        int len = attributes.getLength();
-        for (int i = 0; i < len; i++) {
-            Node node = attributes.item(i);
-            String name = node.getLocalName();
-            if (!props.contains(name)) {
-                if (parameters == null) {
-                    parameters = new ManagedMap();
-                }
-                String value = node.getNodeValue();
-                parameters.put(name, new TypedStringValue(value, String.class));
-            }
-        }
-        if (parameters != null) {
-            beanDefinition.getPropertyValues().addPropertyValue("parameters", parameters);
-        }
-        return beanDefinition;
-    }
-```
 到这里我们大致知道了dubbo如何读取xml配置文件，定义成spring的BeanDefinition对象。
 
 ---
 ##### ServiceBean是何时暴露服务的
 ```html
-public class ServiceBean<T> extends ServiceConfig<T> implements
-        BeanNameAware,// setBeanName()
+public class ServiceBean<T> extends ServiceConfig<T> implements BeanNameAware,// setBeanName()
         ApplicationContextAware, // setApplicationContext
         InitializingBean, // afterPropertiesSet()
         DisposableBean, // destory()
@@ -557,7 +525,6 @@ public interface Dispatcher {
 
 }
 ```
-
 ---
 ##### ExecutorRepository -> DefaultExecutorRepository
 ```html
