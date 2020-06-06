@@ -5,7 +5,8 @@
 ![Architecture](http://dubbo.apache.org/img/architecture.png)
 
 
-## 源码模块划分
+## 源码模块划分   
+```html
 common : 通用逻辑模块，提供工具类和通用模型  
 remoting: 远程模块，为消费者和服务提供者提供通信能力    
 rpc: 与remoting相似，本模块提供各种通信协议，以及动态代理   
@@ -17,10 +18,12 @@ container：容器模块
 fiter：拦截器模块，包含dubbo内置的过滤器   
 plugin:插件模块,提供内置的插件   
 demo:远程调用示例      
-test：测试模块      
+test：测试模块  
+```    
 ---
 
 ## 功能层次划分  
+```html
 service: 业务层，开发者实现的业务代码
 proxy:服务代理层
 registry:注册层，dubbo服务的注册于发现
@@ -30,6 +33,7 @@ protocol:远程调用层
 exchange 信息交换层
 transport 网络传输层
 serialize序列化层  
+```
 
 ---
 
