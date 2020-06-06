@@ -21,7 +21,7 @@ import com.alibaba.dubbo.remoting.ChannelHandler;
 import com.alibaba.dubbo.remoting.Dispatcher;
 
 /**
- * Direct dispatcher
+ * 所有事件都是I/O线程上处理
  */
 public class DirectDispatcher implements Dispatcher {
 

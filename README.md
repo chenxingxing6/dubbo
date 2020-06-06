@@ -99,6 +99,42 @@ dubbo服务初始化启动时，通过Proxy组件调用具体协议（Protocol�
 4.ConsistentHashLoadBalance    
 
 
+##### 6.缓存实现原理
+1.LruCache    
+2.ThreadLocalCache    
+3.Jcache     
+
+##### 7.线程模型
+1.AllDispatcher（默认）
+2.DirectDispatcher   
+3.MessageOnlyDispatcher   
+4.ExecutionDispatcher   
+5.ConnectionDispatcher   
+
+确定时机？
+1.new NettyServer()->ChannelHandlers.wrap()   
+2.new HeartbeatHandler(SPI);  
+
+##### 8.线程池策略（dubbo自己实现）
+1.fix(默认)
+2.limited
+3.eager
+4.cached
+
+确定时机？(以AllDispatcher为例子)
+1.new AllChannelHandler()    
+2.new WrappedChannelHandler()   
+3.ExtensionLoader.getExtensionLoader(ThreadPool.class).getAdaptiveExtension().getExecutor(url);  
+
+
+
+
+
+
+
+
+
+
 
 ---
 # 服务暴露，服务提供者

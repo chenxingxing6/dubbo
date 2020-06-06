@@ -43,6 +43,7 @@ public class ChannelHandlers {
         INSTANCE = instance;
     }
 
+    // 确定使用线程模型时机
     protected ChannelHandler wrapInternal(ChannelHandler handler, URL url) {
         return new MultiMessageHandler(new HeartbeatHandler(ExtensionLoader.getExtensionLoader(Dispatcher.class)
                 .getAdaptiveExtension().dispatch(handler, url)));
