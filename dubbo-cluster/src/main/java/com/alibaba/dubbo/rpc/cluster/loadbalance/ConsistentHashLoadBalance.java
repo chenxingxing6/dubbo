@@ -1,19 +1,3 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.alibaba.dubbo.rpc.cluster.loadbalance;
 
 import com.alibaba.dubbo.common.Constants;
@@ -32,43 +16,56 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * ConsistentHashLoadBalance
+ * 一致性Hash（相同参数的请求总是发到同一个提供者实例）
+ * hash.arguments：由哪几个参数生成key
+ * hash.nodes：节点副本
  *
  */
 public class ConsistentHashLoadBalance extends AbstractLoadBalance {
-
     private final ConcurrentMap<String, ConsistentHashSelector<?>> selectors = new ConcurrentHashMap<String, ConsistentHashSelector<?>>();
 
-    @SuppressWarnings("unchecked")
     @Override
     protected <T> Invoker<T> doSelect(List<Invoker<T>> invokers, URL url, Invocation invocation) {
+        // 获取key
         String methodName = RpcUtils.getMethodName(invocation);
         String key = invokers.get(0).getUrl().getServiceKey() + "." + methodName;
         int identityHashCode = System.identityHashCode(invokers);
+        // 根据key获取一致性hash选择器
         ConsistentHashSelector<T> selector = (ConsistentHashSelector<T>) selectors.get(key);
         if (selector == null || selector.identityHashCode != identityHashCode) {
             selectors.put(key, new ConsistentHashSelector<T>(invokers, methodName, identityHashCode));
             selector = (ConsistentHashSelector<T>) selectors.get(key);
         }
+        // 选择节点
         return selector.select(invocation);
     }
 
+
+    /**
+     * 内部类
+     * 一致性hash(一个环，很多个虚拟节点，某个请求计算hash=1，找到比1大的最小实例)
+      * @param <T>
+     */
     private static final class ConsistentHashSelector<T> {
-
+        // 虚拟节点（保证分布平衡）
         private final TreeMap<Long, Invoker<T>> virtualInvokers;
-
+        // 副本数
         private final int replicaNumber;
-
+        // 调用节点hashcode
         private final int identityHashCode;
-
+        // 参数索引数组
         private final int[] argumentIndex;
 
         ConsistentHashSelector(List<Invoker<T>> invokers, String methodName, int identityHashCode) {
             this.virtualInvokers = new TreeMap<Long, Invoker<T>>();
             this.identityHashCode = identityHashCode;
             URL url = invokers.get(0).getUrl();
+
+            // 默认副本个数（假设5个实例，虚拟节点有=160*50=800个）
             this.replicaNumber = url.getMethodParameter(methodName, "hash.nodes", 160);
+            // 哪些参数进行hash，默认第一个  <dubbo:parameter key="hash.arguments" value="0,1" />
             String[] index = Constants.COMMA_SPLIT_PATTERN.split(url.getMethodParameter(methodName, "hash.arguments", "0"));
+
             argumentIndex = new int[index.length];
             for (int i = 0; i < index.length; i++) {
                 argumentIndex[i] = Integer.parseInt(index[i]);
@@ -101,7 +98,11 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
             return buf.toString();
         }
 
+        /**
+         * 选择实例
+         */
         private Invoker<T> selectForKey(long hash) {
+            // 找出大于或等于 hash 中最小的键值对
             Map.Entry<Long, Invoker<T>> entry = virtualInvokers.tailMap(hash, true).firstEntry();
             if (entry == null) {
                 entry = virtualInvokers.firstEntry();

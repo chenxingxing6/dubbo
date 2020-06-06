@@ -1,19 +1,3 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.alibaba.dubbo.rpc.cluster.loadbalance;
 
 import com.alibaba.dubbo.common.URL;
@@ -31,9 +15,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Round robin load balance.
- * 
- * Smoothly round robin's implementation @since 2.6.5 
+ * 轮询
+ *
+ * 实现思路：首先计算出多服务实例的最大最小权重，如果权重都一样（maxWeight=minWeight），
+ * 则直接取模轮询；如果权重不一样，每一轮调用，都计算出一个基础的权重值，然后筛选出权重值
+ * 大于基础权重值得invoker进行取模随机调用
  */
 public class RoundRobinLoadBalance extends AbstractLoadBalance {
     public static final String NAME = "roundrobin";

@@ -79,6 +79,26 @@ dubbo服务初始化启动时，通过Proxy组件调用具体协议（Protocol�
 5.NettyClient -> new AbstractClient() -> connect()   
 
 
+##### 3.超时实现原理
+1.ReentrantLock,ConditionObject
+2.DefaultFuture.class -> get()
+
+
+##### 4.重试实现原理
+1.FailoverClusterInvoke.class->doInvoke()  
+
+
+##### 5.负载实现原理
+1.RandomLoadBalance
+2.RoundRobinLoadBalance
+3.LeastActiveLoadBalance(RpcStatus维护了个map)
+4.ConsistentHashLoadBalance 
+
+
+
+
+
+
 
 ---
 # 服务暴露，服务提供者

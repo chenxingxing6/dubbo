@@ -58,6 +58,7 @@ public class DefaultFuture implements ResponseFuture {
     private final Channel channel;
     private final Request request;
     private final int timeout;
+    // 重点来了，ReentrantLock,条件队列实现超时判断
     private final Lock lock = new ReentrantLock();
     private final Condition done = lock.newCondition();
     private final long start = System.currentTimeMillis();
@@ -135,17 +136,26 @@ public class DefaultFuture implements ResponseFuture {
         return get(timeout);
     }
 
+
+    /**
+     * 获取响应结果，超时判断
+     */
     @Override
     public Object get(int timeout) throws RemotingException {
         if (timeout <= 0) {
             timeout = Constants.DEFAULT_TIMEOUT;
         }
+        // 1.response不为空，已经有响应结果
         if (!isDone()) {
             long start = System.currentTimeMillis();
             lock.lock();
             try {
+                // 2.轮询是否收到响应结果
                 while (!isDone()) {
+                    // 3.如果没有接到到，则释放线程，等待时间为超时时间
+                    // 唤醒情况1：done.signal() 唤醒情况2：等待timeout
                     done.await(timeout, TimeUnit.MILLISECONDS);
+                    // 4.判断是否超时
                     if (isDone() || System.currentTimeMillis() - start > timeout) {
                         break;
                     }
