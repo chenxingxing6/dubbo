@@ -59,32 +59,32 @@ dubbo服务初始化启动时，通过Proxy组件调用具体协议（Protocol�
 ## 面试题
 ##### 1.服务发布流程
 1.DubboNamespaceHandler.init()  
-2.ServiceBean.afterPropertiesSet() -> export()
-3.ServiceConfig.doExport() -> doExportUrls() -> doExportUrlsFor1Protocol()   
-4.SPI扩展  ExtensionLoader.getExtensionLoader(ProxyFactory.class).getAdaptiveExtension(); 
-  ProxyFactory 
-  Protocol
-  Exchanger
-  Transporter
-  Dispatcher
-  ExecutorRepository
-  ThreadPool
+2.ServiceBean.afterPropertiesSet() -> export()    
+3.ServiceConfig.doExport() -> doExportUrls() -> doExportUrlsFor1Protocol()       
+4.SPI扩展  ExtensionLoader.getExtensionLoader(ProxyFactory.class).getAdaptiveExtension()  
+  ProxyFactory    
+  Protocol   
+  Exchanger   
+  Transporter   
+  Dispatcher   
+  ExecutorRepository   
+  ThreadPool   
 
    
 
 ##### 2.服务引用流程
 1.DubboNamespaceHandler.init()  
 2.ReferenceBean.afterPropertiesSet() -> getObject()  
-3.ReferenceConfig.init() -> createProxy(map) -> refprotocol.refer(interfaceClass, url)
-4.DubboProtocol.refer() 
+3.ReferenceConfig.init() -> createProxy(map) -> refprotocol.refer(interfaceClass, url)   
+4.DubboProtocol.refer()   
 5.new DubboInvoker<T>(serviceType, url, getClients(url), invokers)
-6.Exchangers.connect(url, requestHandler);
+6.Exchangers.connect(url, requestHandler);   
 4.Transporters.connect()
 5.NettyClient -> new AbstractClient() -> connect()   
 
 
 ##### 3.超时实现原理
-1.ReentrantLock,ConditionObject
+1.ReentrantLock,ConditionObject   
 2.DefaultFuture.class -> get()
 
 
@@ -93,14 +93,10 @@ dubbo服务初始化启动时，通过Proxy组件调用具体协议（Protocol�
 
 
 ##### 5.负载实现原理
-1.RandomLoadBalance
-2.RoundRobinLoadBalance
-3.LeastActiveLoadBalance(RpcStatus维护了个map)
-4.ConsistentHashLoadBalance 
-
-
-
-
+1.RandomLoadBalance    
+2.RoundRobinLoadBalance   
+3.LeastActiveLoadBalance(RpcStatus维护了个map)   
+4.ConsistentHashLoadBalance    
 
 
 
